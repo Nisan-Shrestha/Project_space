@@ -2,7 +2,7 @@
 #include<conio.h>
 #include <Windows.h>
 #define gotoxy(x,y) printf("\033[%d;%dH", (y), (x))
-	int debug;
+	int debug=1;
 	int height=25;
 	int width=80;
 	int gameover=0;
@@ -14,8 +14,8 @@
 typedef struct bullet
 {
     int x,y,dy;
-    int max;
     int used;
+    int used_or_not;
 };
 
 typedef struct hero
@@ -32,24 +32,34 @@ typedef struct coordinate
 
 //	enum eDirection{STOP=0, LEFT,RIGHT,UP,DOWN};
 //	enum eDirection dir;
-
 void main()
-{int i;
+{
+    int i,j;
 	struct coordinate globalco[height][width];
 	struct hero player;
-    struct bullet player_bullet[player_max_bullet];
+struct bullet player_bullet[player_max_bullet];
+
     draw_init_splash();                 // Border and get ready
     init_enemy(globalco);          // sets enemy position in background
     draw_init_enemy(globalco);       // displays enemy setup
 	player.x=40;                        // player position initialization
 	player.y=24;                        // player position initialization
-    for(i=1 ; i <= player_max_bullet ; i++)
-        player_bullet[i].used=0;            //empties all player bullet slot
 
+    for(i=1 ; i <= player_max_bullet ; i++)
+    {
+        player_bullet[i].used_or_not=0;            //empties all player bullet slot
+        player_bullet[i].x=0;
+        player_bullet[i].y=0;
+    }
 		while(!gameover){
 			draw_player(&player);       //update player position
-			input();                    //take input
 
+			input();                    //take input
+            printf("\n");
+            for(j=1 ; j <= player_max_bullet ; j++)
+                 printf("   outst: %d",player_bullet[j].used_or_not);
+
+            //compute position
             if (dir_player!=0)
             {
                 player.last_x = player.x;   //save last position in temporary variable to print empty space and clean screen at the point ; refer to void draw_player();
@@ -57,37 +67,19 @@ void main()
                 dir_player=0;
             }
 
-            if (shoot == 1 && player_bullet_used < player_max_bullet)
-            { for(i=1 ; i <= player_max_bullet ; i++)
-                { printf("aaa: %d \n",player_bullet[i].used);
-                Sleep(50);}
-                player_bullet_used += 1 ;
-                printf(" bullet used: %d\n",player_bullet_used);
-                for(i=1 ; i <= player_max_bullet ; i++)
-                { printf("%d \n",player_bullet[i].used);
-                Sleep(50);
-                    if (player_bullet[i].used=0)
-                    {
-                        player_bullet[i].used=1;
-                        player_bullet_release(player_bullet,&player,i);
-                        gotoxy(10,10);
-                        printf("asadas");
-                        Sleep(500);
-                       goto outofloop;
-
-                    }
-                }
-                outofloop:
-                shoot=0;
-            }
-            if (player_bullet_used < player_max_bullet)
+            if (shoot==1 && player_bullet_used < player_max_bullet)
             {
-                    player_bullet_release(player_bullet,&player);
+                player_bullet_used++;
+                for(i=1;player_bullet[i].used_or_not==1;i++);
+                player_bullet[i].used_or_not=1;
+                for(j=1 ; j <= player_max_bullet ; j++)
+                printf("      \n inst: %d %d",i,player_bullet[j].used_or_not);
+                shoot=0;
+                player_bullet_release(player_bullet,&player,i);  //i= bullet index
             }
-
-            draw_player_bullet(player_bullet);
-*/
-            Sleep(20);
+draw_player_bullet(player_bullet);
+            //draw_player_bullet(player_bullet);
+            Sleep(500);
 		}
 		if(score==300) printf("Congrats You won");                  //score not implemented.....yet
 		else printf("Too bad.... try again");
@@ -176,9 +168,9 @@ void main()
             printf(" ");
             gotoxy(player->x,player->y);
             printf("%c",142);
-            gotoxy(80,25);
+            gotoxy(0,25);
         }
-
+gotoxy(0,25);
 	}
 
 	void input(){
@@ -206,38 +198,44 @@ void main()
 			}
 		}
 	}
+
 	void shoot_check(struct bullet player_bullet[])
 	{int i;
 	    if (shoot == 1 && player_bullet_used < player_max_bullet)
             {
                 player_bullet_used+=1;
-                for(i=1;player_bullet[i].used==0;i++);
+                for(i=1;player_bullet[i].used!=1;i++);
                 player_bullet[i].used=1;
                  //player_bullet_release(player_bullet[i],&player);
                 shoot=0;
+
             }
 	}
     void player_bullet_release(struct bullet player_bullet[],struct hero *player, int i)
     {   int j;
-
+            gotoxy(0,81);
+            printf("player pos %d %d",player->x, player->y);
             player_bullet[i].x = player->x;
             player_bullet[i].y = (player->y-1);
             player_bullet[i].dy=-1;
-
+            printf(" : %d %d %d",i,player_bullet[i].x,player_bullet[i].y);
 
     }
 
     void draw_player_bullet(struct bullet player_bullet[])
     {int i;
         for(i=1;i<=player_max_bullet;i++)
-        {
-            if (player_bullet[i].used=1)
-            {
+        {   printf("draw bullet   ");
+        //printf(" : %d %d %d",i,player_bullet[i].x,player_bullet[i].y);
+            if (player_bullet[i].used_or_not==1)
+            {if ( player_bullet[i].y!=0)
+            { //printf("\n nnnnn: %d %d",player_bullet[i].x,player_bullet[i].y);
                 gotoxy(player_bullet[i].x,player_bullet[i].y);
                 printf("1");
 
+
                 player_bullet[i].y+=player_bullet[i].dy;  //update bullet one step up
-            }
+            }}
         }
     }
 
